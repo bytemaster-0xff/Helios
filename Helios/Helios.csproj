@@ -217,6 +217,7 @@
     <Compile Include="Gauges\AV-8B\Stopwatch\StopwatchDial.cs" />
     <Compile Include="Gauges\CompositeVisualWithBackgroundImage.cs" />
     <Compile Include="Gauges\FA-18C\ADI\ADI.cs" />
+    <Compile Include="Gauges\FA-18C\JSS\JSS.cs" />
     <Compile Include="Gauges\FA-18C\UFC\UFCScratchPadDisplay.cs" />
     <Compile Include="Gauges\FA-18C\UFC\UFCTextDisplay.cs" />
     <Compile Include="Gauges\M2000C\Altimeter\Altimeter.cs" />

@@ -271,6 +271,17 @@
     <Resource Include="Images\UFC Rotator_U.png" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Images\JSS FacePlate.png" />
+    <Resource Include="Images\JSS Button Dn CTR.png" />
+    <Resource Include="Images\JSS Button Dn LI.png" />
+    <Resource Include="Images\JSS Button Dn LO.png" />
+    <Resource Include="Images\JSS Button Dn RI.png" />
+    <Resource Include="Images\JSS Button Dn RO.png" />
+    <Resource Include="Images\JSS Button Up CTR.png" />
+    <Resource Include="Images\JSS Button Up LI.png" />
+    <Resource Include="Images\JSS Button Up LO.png" />
+    <Resource Include="Images\JSS Button Up RI.png" />
+    <Resource Include="Images\JSS Button Up RO.png" />
     <Content Include="Templates\Base\FA-18C\ODU Display Element.htpl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
