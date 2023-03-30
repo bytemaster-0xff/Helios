@@ -24,22 +24,39 @@ namespace GadrocsWorkshop.Helios.Gauges.FA_18C.JSS
         private string _interfaceDeviceName = "JSS";
         private string _ufcCueing = "!=È";
 
+        private string IndicatorName(string name, bool isOn)
+        {
+            return "{FA-18C}/Images/" + name + (isOn ? " On" : " Off") + ".png";
+             
+        }
 
         public JSS()
         : base("JSS", new Size(140, 470))
         {
-            AddButton("CTR", 50,200, new Size(32, 32), "Jettison Center");
-            AddButton("RI", 30, 250, new Size(32, 32), "Jettison Right Inner");
-            AddButton("RO", 80, 250, new Size(32, 32), "Jettison Right Outer");
-            AddButton("LI", 30, 300, new Size(32, 32), "Jettison Left Inner");
-            AddButton("LO", 80, 300, new Size(32, 32), "Jettison Left Outer");
+            AddButton("CTR", (70-24),140, new Size(48, 48), "Jettison Center");
+            AddButton("LI", 18, 200, new Size(48, 48), "Jettison Left Inner");
+            AddButton("LO", 18, 260, new Size(48, 48), "Jettison Left Outer");
+            AddButton("RI", 80, 200, new Size(48, 48), "Jettison Right Inner");
+            AddButton("RO", 80, 260, new Size(48, 48), "Jettison Right Outer");
 
-            AddTextDisplay("JSS_GEAR_NOSE", 40, 370, new Size(50, 20), "Option Display 1 Selected", 32, "~", TextHorizontalAlignment.Left, _ufcCueing);
-            AddTextDisplay("JSS_GEAR_LEFT", 10, 400, new Size(50, 20), "Option Display 1 Selected", 32, "~", TextHorizontalAlignment.Left, _ufcCueing);
-            AddTextDisplay("JSS_GEAR_RIGHT", 70, 400, new Size(50, 20), "Option Display 1 Selected", 32, "~", TextHorizontalAlignment.Left, _ufcCueing);
-            AddTextDisplay("JSS_FLAPS_FULL", 10, 430, new Size(50, 20), "Option Display 1 Selected", 32, "~", TextHorizontalAlignment.Left, _ufcCueing);
-            AddTextDisplay("JSS_FLAPS_HALF", 70, 430, new Size(50, 20), "Option Display 1 Selected", 32, "~", TextHorizontalAlignment.Left, _ufcCueing);
-            AddTextDisplay("JSS_FLAPS", 50, 460, new Size(50, 20), "Option Display 1 Selected", 32, "~", TextHorizontalAlignment.Left, _ufcCueing);
+
+
+            AddIndicator("GEAR_NOSE", new Point(45, 320), new Size(50, 27), IndicatorName("Gear Nose", true), IndicatorName("Gear Nose", false), Colors.Transparent, Colors.Transparent,
+                "Helios Virtual Cockpit F/A-18C_Hornet-Up_Front_Controller", false, _interfaceDeviceName, "Nose Gear", false);
+            AddIndicator("GEAR_LEFT", new Point(20, 355), new Size(50, 27), IndicatorName("Gear Left", true), IndicatorName("Gear Left", false), Colors.Transparent, Colors.Transparent,
+                "Helios Virtual Cockpit F/A-18C_Hornet-Up_Front_Controller", false, _interfaceDeviceName, "Left Gear", false);
+            AddIndicator("GEAR_RIGHT", new Point(70, 355), new Size(50, 27), IndicatorName("Gear Right", true), IndicatorName("Gear Right", false), Colors.Transparent, Colors.Transparent,
+                "Helios Virtual Cockpit F/A-18C_Hornet-Up_Front_Controller", false, _interfaceDeviceName, "Right Gear", false);
+
+
+            AddIndicator("FLAPS_FULL", new Point(20, 390), new Size(50, 27), IndicatorName("Flaps Full", true), IndicatorName("Flaps Full", false), Colors.Transparent, Colors.Transparent,
+                "Helios Virtual Cockpit F/A-18C_Hornet-Up_Front_Controller", false, _interfaceDeviceName, "Full Flaps", false);
+
+            AddIndicator("FLAPS_HALF", new Point(70, 390), new Size(50, 27), IndicatorName("Flaps Half", true), IndicatorName("Flaps Half", false), Colors.Transparent, Colors.Transparent,
+                "Helios Virtual Cockpit F/A-18C_Hornet-Up_Front_Controller", false, _interfaceDeviceName,"Half Flaps", false);
+
+            AddIndicator("FLAPS", new Point(45, 425), new Size(50, 27), IndicatorName("Flaps", true), IndicatorName("Flaps", false), Colors.Transparent, Colors.Transparent,
+                "Helios Virtual Cockpit F/A-18C_Hornet-Up_Front_Controller", false, _interfaceDeviceName, "Flaps", false);
         }
 
 
@@ -63,7 +80,7 @@ namespace GadrocsWorkshop.Helios.Gauges.FA_18C.JSS
         private void AddTextDisplay(string name, double x, double y, Size size,
             string interfaceElementName, double baseFontsize, string testDisp, TextHorizontalAlignment hTextAlign, string ufcDictionary)
         {
-            TextDisplay display = AddTextDisplay(
+                TextDisplay display = AddTextDisplay(
                 name: name,
                 posn: new Point(x, y),
                 size: size,

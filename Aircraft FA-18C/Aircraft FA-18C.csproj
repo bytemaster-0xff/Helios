@@ -282,6 +282,18 @@
     <Resource Include="Images\JSS Button Up LO.png" />
     <Resource Include="Images\JSS Button Up RI.png" />
     <Resource Include="Images\JSS Button Up RO.png" />
+    <Resource Include="Images\Gear Left Off.png" />
+    <Resource Include="Images\Gear Left On.png" />
+    <Resource Include="Images\Gear Nose Off.png" />
+    <Resource Include="Images\Gear Nose On.png" />
+    <Resource Include="Images\Flaps Full Off.png" />
+    <Resource Include="Images\Flaps Full On.png" />
+    <Resource Include="Images\Flaps Off.png" />
+    <Resource Include="Images\Flaps On.png" />
+    <Resource Include="Images\Gear Right Off.png" />
+    <Resource Include="Images\Gear Right On.png" />
+    <Resource Include="Images\Flaps Half Off.png" />
+    <Resource Include="Images\Flaps Half On.png" />
     <Content Include="Templates\Base\FA-18C\ODU Display Element.htpl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
