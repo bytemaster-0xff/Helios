@@ -22,9 +22,12 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <TextBlock Text="Add Pub Sub Topics"></TextBlock>
-        <Button Grid.Row="1" Grid.Column="1" Command="{Binding Path=Interface.AddTopicCommand}"  Content="Add Topic"></Button>
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.AddTopicCommand}"  Content="Add Topic"></Button>
+            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.RemoveTopicCommand}"  Content="Remove Topic"></Button>
+        </StackPanel>
         <TextBox Grid.Row="1" Text="{Binding Interface.TopicName, Mode=TwoWay}" />
-        <ListBox Grid.Row="3" Grid.ColumnSpan="1" ItemsSource="{Binding Path=Interface.Topics}">
+        <ListBox Grid.Row="3" Grid.ColumnSpan="1" ItemsSource="{Binding Path=Interface.Topics}" SelectedItem="{Binding Path=Interface.SelectedTopic, Mode=TwoWay}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Topic}"></TextBlock>

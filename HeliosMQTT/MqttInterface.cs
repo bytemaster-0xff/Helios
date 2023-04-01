@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using System.Windows;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 {
@@ -42,10 +43,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private byte _brightness = 50;
-        private bool _isDeckConnected;
-
-        MqttServer _mqttServer;
+        static MqttServer _mqttServer;
 
         // currently registered Helios triggers for this object
         private readonly NoResetObservablecollection<IBindingTrigger> _pressedTriggers =
@@ -59,6 +57,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
         public MqttInterface() : base("MQTT Pub Sub Interface")
         {
             AddTopicCommand = new RelayCommand((obj) => AddTopic(obj));
+            RemoveTopicCommand = new RelayCommand((obj) => RemoveTopic(obj));
         }
 
         private void LoadTriggers()
@@ -114,9 +113,20 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 ReceivedMessages.Add(arg.ApplicationMessage.Topic);
             });
 
-            var trigger = Triggers.FirstOrDefault(trg => trg.Name == arg.ApplicationMessage.Topic);
+            var trigger = Triggers.FirstOrDefault(trg => trg.Name == arg.ApplicationMessage.Topic) as HeliosTrigger;
             if(trigger != null)
-                (trigger as HeliosTrigger).FireTrigger(new BindingValue(true));
+            {
+                if (!Application.Current.Dispatcher.CheckAccess())
+                {
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                        trigger?.FireTrigger(new BindingValue(true))));
+                }
+                else
+                {
+                    trigger?.FireTrigger(new BindingValue(true));
+                }
+
+            }
 
             Debug.WriteLine(arg.ApplicationMessage.Topic);
             if (arg.ApplicationMessage.Payload != null)
@@ -127,14 +137,18 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 
         private async void CloseMQTTConnection()
         {
-            await _mqttServer.StopAsync();
-            _mqttServer.Dispose();
-            _mqttServer = null;
+            if (_mqttServer != null)
+            {
+                await _mqttServer.StopAsync();
+                _mqttServer.Dispose();
+                _mqttServer = null;
+            }
         }
 
         protected override void AttachToProfileOnMainThread()
         {
-            OpenMQTTConnection();
+            if(Application.Current.GetType().FullName != "GadrocsWorkshop.Helios.ProfileEditor.App" && _mqttServer == null)
+                OpenMQTTConnection();
 
             PropertyChanged += MqttInterface_PropertyChanged; ;
         }
@@ -160,22 +174,39 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             }
         }
 
+        private void RemoveTopic(Object obj)
+        {
+            if(SelectedTopic != null)
+            {
+                Topics.Remove(SelectedTopic);
+                SelectedTopic = null;
+                LoadTriggers();
+            }
+        }
+
         public override void ReadXml(XmlReader reader)
         {
             reader.ReadStartElement("Topics");
             int buttonCount = int.Parse(reader.ReadElementString("TopicsCount"));
+
+            var topics = new List<SubscribedTopic>();
             for (int i = 0; i < buttonCount; i++)
             {
                 reader.ReadStartElement("Topic");
                 string topicName = reader.ReadElementString("Name");
                 string payloadType = reader.ReadElementString("PayloadType");
-                Topics.Add(new SubscribedTopic()
+                topics.Add(new SubscribedTopic()
                 {
                     Topic = topicName,
                     PayloadType = (SubscribedTopic.PayloadTypes)Enum.Parse(typeof(SubscribedTopic.PayloadTypes), payloadType)
                 });
 
                 reader.ReadEndElement();
+            }
+
+            foreach(var topic in topics.OrderBy(trg=>trg.Topic))
+            {
+                Topics.Add(topic);
             }
 
             reader.ReadEndElement();
@@ -214,11 +245,24 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             }
         }
 
+        private SubscribedTopic _selectedTopic;
+        public SubscribedTopic SelectedTopic
+        {
+            get => _selectedTopic;
+            set
+            {
+                var oldValue = _selectedTopic;
+                _selectedTopic = value;
+                OnPropertyChanged(nameof(SelectedTopic), oldValue, value, false);
+            }
+        }
+
         public ObservableCollection<SubscribedTopic> Topics { get; } = new ObservableCollection<SubscribedTopic>();
         public ObservableCollection<string> ReceivedMessages { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> ConnectedClients { get; } = new ObservableCollection<string>();
 
         public ICommand AddTopicCommand { get; }
+        public ICommand RemoveTopicCommand { get; }
 
     }
 }
