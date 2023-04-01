@@ -114,7 +114,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 ReceivedMessages.Add(arg.ApplicationMessage.Topic);
             });
 
-            var trigger = Triggers.FirstOrDefault(trg => trg.TriggerName == arg.ApplicationMessage.Topic);
+            var trigger = Triggers.FirstOrDefault(trg => trg.Name == arg.ApplicationMessage.Topic);
             if(trigger != null)
                 (trigger as HeliosTrigger).FireTrigger(new BindingValue(true));
 
