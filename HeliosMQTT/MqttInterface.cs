@@ -27,7 +27,6 @@ using System;
 using MQTTnet;
 using MQTTnet.Server;
 using System.Diagnostics;
-using System.Windows.Threading;
 using System.Windows;
 using System.Linq;
 using System.Collections.Generic;
@@ -46,17 +45,11 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
         static MqttServer _mqttServer;
 
         // currently registered Helios triggers for this object
-        private readonly NoResetObservablecollection<IBindingTrigger> _pressedTriggers =
-            new NoResetObservablecollection<IBindingTrigger>();
-
-        // currently registered Helios triggers for this object
-        private readonly NoResetObservablecollection<IBindingTrigger> _releasedTriggers =
-            new NoResetObservablecollection<IBindingTrigger>();
-
 
         public MqttInterface() : base("MQTT Pub Sub Interface")
         {
             AddTopicCommand = new RelayCommand((obj) => AddTopic(obj));
+            AddPublishedActionCommand = new RelayCommand((obj) => AddPublishedAction(obj));
             RemoveTopicCommand = new RelayCommand((obj) => RemoveTopic(obj));
         }
 
@@ -70,6 +63,30 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 topic.Topic, "received", "Fired when a topic is received.",
                    "Always returns true.", BindingValueUnits.Boolean);
                 Triggers.Add(receivedTrigger);
+            }
+        }
+
+        private void LoadActions()
+        {
+            Actions.Clear();
+            foreach(var value in PublishedActions)
+            {
+                var valueUnit = BindingValueUnits.FetchUnitByName(value.UnitName);
+
+                var action = new HeliosAction(this, value.Device, value.Topic, "publish",
+                    $"Action to publish {value.Topic}", value.Description, valueUnit);
+                action.Execute += Action_Execute;
+                Actions.Add(action);
+            }
+        }
+
+        private void Action_Execute(object action, HeliosActionEventArgs e)
+        {
+            var ha = action as HeliosAction;
+
+            if(_mqttServer != null && _mqttServer.IsStarted)
+            {
+                _mqttServer.InjectApplicationMessage(new InjectedMqttApplicationMessage(new MqttApplicationMessage() { Topic = ha.Name } ));
             }
         }
 
@@ -164,14 +181,48 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             CloseMQTTConnection();
         }
 
+        private void AddPublishedAction(Object obj)
+        {
+            ValidationErrors.Clear();
+
+            var errors = SelectedPublishedAction.Validate();
+            if(errors.Any())
+            {
+                foreach(var err in errors)
+                    ValidationErrors.Add(err);
+                return;
+            }
+
+            if (String.IsNullOrEmpty(SelectedPublishedAction.Id))
+            {
+                SelectedPublishedAction.Id = Guid.NewGuid().ToString();
+                PublishedActions.Add(SelectedPublishedAction);
+            }
+
+            SelectedPublishedAction = new TopicAction();
+            LoadActions();
+        }
+
         private void AddTopic(Object obj)
         {
-            if (!String.IsNullOrEmpty(TopicName))
+            ValidationErrors.Clear();
+
+            var errors = SelectedTopic.Validate();
+            if (errors.Any())
             {
-                Topics.Add(new SubscribedTopic() { Topic = TopicName, PayloadType = SubscribedTopic.PayloadTypes.None });
-                TopicName = String.Empty;
-                LoadTriggers();
+                foreach (var err in errors)
+                    ValidationErrors.Add(err);
+                return;
             }
+
+            if (String.IsNullOrEmpty(SelectedTopic.Id))
+            {
+                SelectedTopic.Id = Guid.NewGuid().ToString();
+                Topics.Add(SelectedTopic);
+            }
+
+                SelectedTopic = new SubscribedTopic();
+                LoadTriggers();
         }
 
         private void RemoveTopic(Object obj)
@@ -186,45 +237,106 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 
         public override void ReadXml(XmlReader reader)
         {
+            reader.ReadStartElement("Content");
             reader.ReadStartElement("Topics");
             int buttonCount = int.Parse(reader.ReadElementString("TopicsCount"));
 
             var topics = new List<SubscribedTopic>();
             for (int i = 0; i < buttonCount; i++)
             {
-                reader.ReadStartElement("Topic");
-                string topicName = reader.ReadElementString("Name");
-                string payloadType = reader.ReadElementString("PayloadType");
+                reader.ReadStartElement(nameof(SubscribedTopic));
+     
                 topics.Add(new SubscribedTopic()
                 {
-                    Topic = topicName,
-                    PayloadType = (SubscribedTopic.PayloadTypes)Enum.Parse(typeof(SubscribedTopic.PayloadTypes), payloadType)
+                    Id = reader.ReadElementString(nameof(TopicAction.Id)),
+                    Device = reader.ReadElementString(nameof(TopicAction.Device)),
+                    Description = reader.ReadElementString(nameof(TopicAction.Description)),
+                    DefaultValue = reader.ReadElementString(nameof(TopicAction.DefaultValue)),
+                    Topic = reader.ReadElementString(nameof(TopicAction.Topic)),
+                    UnitName = reader.ReadElementString(nameof(TopicAction.UnitName)),
                 });
 
                 reader.ReadEndElement();
             }
 
-            foreach(var topic in topics.OrderBy(trg=>trg.Topic))
+            reader.ReadEndElement();
+
+            reader.ReadStartElement("PublishedActions");
+            var values = new List<TopicAction>();
+            var valueCount = int.Parse(reader.ReadElementString("PublishedActionsCount"));
+            for (int i = 0; i < valueCount; i++)
             {
-                Topics.Add(topic);
+                reader.ReadStartElement(nameof(TopicAction));
+                values.Add(new TopicAction()
+                {
+                    Id = reader.ReadElementString(nameof(TopicAction.Id)),
+                    Device = reader.ReadElementString(nameof(TopicAction.Device)),
+                    Description = reader.ReadElementString(nameof(TopicAction.Description)),
+                    DefaultValue = reader.ReadElementString(nameof(TopicAction.DefaultValue)),
+                    Topic = reader.ReadElementString(nameof(TopicAction.Topic)),
+                    UnitName = reader.ReadElementString(nameof(TopicAction.UnitName)),
+                });
+
+                reader.ReadEndElement();
             }
 
             reader.ReadEndElement();
 
+            reader.ReadEndElement();
+
+            foreach (var value in values.OrderBy(trg => trg.Topic))
+            {
+                PublishedActions.Add(value);
+            }
+
+            foreach (var topic in topics.OrderBy(trg=>trg.Topic))
+            {
+                Topics.Add(topic);
+            }
+
             LoadTriggers();
+            LoadActions();
         }
 
         public override void WriteXml(XmlWriter writer)
         {
+            writer.WriteStartElement("Content");
+
             writer.WriteStartElement("Topics");
             writer.WriteElementString("TopicsCount", Topics.Count.ToString());
             foreach (SubscribedTopic topic in Topics)
             {
-                writer.WriteStartElement("Topic");
-                writer.WriteElementString("Name", topic.Topic);
-                writer.WriteElementString("PayloadType", topic.PayloadType.ToString());
+                writer.WriteStartElement(nameof(SubscribedTopic));
+
+                writer.WriteElementString(nameof(topic.Id), topic.Id);
+                writer.WriteElementString(nameof(topic.Device), topic.Device);
+                writer.WriteElementString(nameof(topic.Description), topic.Description);
+                writer.WriteElementString(nameof(topic.DefaultValue), topic.DefaultValue);
+                writer.WriteElementString(nameof(topic.Topic), topic.Topic);
+                writer.WriteElementString(nameof(topic.UnitName), topic.UnitName);
+             
                 writer.WriteEndElement();
             }
+
+            writer.WriteEndElement();
+
+            writer.WriteStartElement("PublishedActions");
+            writer.WriteElementString("PublishedActionsCount", PublishedActions.Count.ToString());
+            foreach (var pv in PublishedActions)
+            {
+                writer.WriteStartElement(nameof(TopicAction));
+
+                writer.WriteElementString(nameof(pv.Id), pv.Id);
+                writer.WriteElementString(nameof(pv.Device), pv.Device);
+                writer.WriteElementString(nameof(pv.Description), pv.Description);
+                writer.WriteElementString(nameof(pv.DefaultValue), pv.DefaultValue);
+                writer.WriteElementString(nameof(pv.Topic), pv.Topic);
+                writer.WriteElementString(nameof(pv.UnitName), pv.UnitName);
+                
+                writer.WriteEndElement();
+            }
+
+            writer.WriteEndElement();
 
             writer.WriteEndElement();
         }
@@ -245,7 +357,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             }
         }
 
-        private SubscribedTopic _selectedTopic;
+        private SubscribedTopic _selectedTopic = new SubscribedTopic();
         public SubscribedTopic SelectedTopic
         {
             get => _selectedTopic;
@@ -257,12 +369,34 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             }
         }
 
+        private TopicAction _selectedPublishedAction = new TopicAction();
+        public TopicAction SelectedPublishedAction
+        {
+            get => _selectedPublishedAction;
+            set
+            {
+                var oldValue = _selectedPublishedAction;
+                _selectedPublishedAction = value;
+                OnPropertyChanged(nameof(SelectedPublishedAction), oldValue, value, false);
+            }
+        }
+
+        public ObservableCollection<TopicAction> PublishedActions { get; } = new ObservableCollection<TopicAction>();
         public ObservableCollection<SubscribedTopic> Topics { get; } = new ObservableCollection<SubscribedTopic>();
         public ObservableCollection<string> ReceivedMessages { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> ConnectedClients { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> UnitNames { get; } = new ObservableCollection<string>(BindingValueUnits.UnitNames);
+
+        public ObservableCollection<string> ValidationErrors { get; } = new ObservableCollection<string>();
+
 
         public ICommand AddTopicCommand { get; }
         public ICommand RemoveTopicCommand { get; }
+
+        public ICommand AddPublishedActionCommand { get; }
+        public ICommand RemovePublishedValueCommand { get; }
+
+
 
     }
 }

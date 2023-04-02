@@ -21,26 +21,76 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <TextBlock Text="Add Pub Sub Topics"></TextBlock>
-        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.AddTopicCommand}"  Content="Add Topic"></Button>
-            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.RemoveTopicCommand}"  Content="Remove Topic"></Button>
-        </StackPanel>
-        <TextBox Grid.Row="1" Text="{Binding Interface.TopicName, Mode=TwoWay}" />
-        <ListBox Grid.Row="3" Grid.ColumnSpan="1" ItemsSource="{Binding Path=Interface.Topics}" SelectedItem="{Binding Path=Interface.SelectedTopic, Mode=TwoWay}">
+        <ListBox ItemsSource="{Binding Path=Interface.ValidationErrors}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Topic}"></TextBlock>
-                </DataTemplate>
-            </ListBox.ItemTemplate>    
-        </ListBox>
-        <ListBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Path=Interface.ReceivedMessages}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding .}"></TextBlock>
+                    <TextBlock Text="{Binding .}" Foreground="Red" />
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+        <Grid Grid.Row="3"  >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ListBox Grid.Row="3" Grid.ColumnSpan="1" ItemsSource="{Binding Path=Interface.Topics}" SelectedItem="{Binding Path=Interface.SelectedTopic, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="20"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Topic}"></TextBlock>
+                            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.RemoveTopicCommand  RelativeSource={RelativeSource AncestorType=MyUserControl }}" Content="-"></Button>
+                        </Grid>
+                        
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Device"/>
+                <TextBox Text="{Binding  Interface.SelectedTopic.Device}"/>
+                <TextBlock Text="Topic"/>
+                <TextBox Text="{Binding Interface.SelectedTopic.Topic}"/>
+                <TextBlock Text="Unit Type"/>
+                <ComboBox ItemsSource="{Binding Interface.UnitNames}" DisplayMemberPath="."  SelectedValuePath="."
+                          SelectedValue="{Binding Path=Interface.SelectedTopic.UnitName}"></ComboBox>
+                <TextBlock Text="Default Value"/>
+                <TextBox Text="{Binding Interface.SelectedTopic.DefaultValue}"/>
+                <Button Width="100" HorizontalAlignment="Right" Command="{Binding Path=Interface.AddTopicCommand}"  Content="Add Topic"></Button>
+            </StackPanel>
+
+        </Grid>
+        <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
+            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.RemovePublishedValueCommand}"  Content="Remove Value"></Button>
+        </StackPanel>
+        <Grid Grid.Row="3" Grid.Column="1" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ListBox ItemsSource="{Binding Path=Interface.PublishedActions}" SelectedItem="{Binding Path=Interface.SelectedPublishedAction, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Topic}"></TextBlock>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Device"/>
+                <TextBox Text="{Binding  Interface.SelectedPublishedAction.Device}"/>
+                <TextBlock Text="Topic"/>
+                <TextBox Text="{Binding Interface.SelectedPublishedAction.Topic}"/>
+                <TextBlock Text="Unit Type"/>
+                <ComboBox ItemsSource="{Binding Interface.UnitNames}" DisplayMemberPath="."  SelectedValuePath="."
+                          SelectedValue="{Binding Path=Interface.SelectedPublishedAction.UnitName}"></ComboBox>
+                <TextBlock Text="Default Value"/>
+                <TextBox Text="{Binding Interface.SelectedPublishedAction.DefaultValue}"/>
+                
+                <Button Grid.Row="1" HorizontalAlignment="Right" Width="100" Grid.Column="1" Command="{Binding Path=Interface.AddPublishedActionCommand}"  Content="Add Action"></Button>
+            </StackPanel>
+        </Grid>
         <ListBox Grid.Row="4" Grid.ColumnSpan="3" ItemsSource="{Binding Path=Interface.ConnectedClients}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
