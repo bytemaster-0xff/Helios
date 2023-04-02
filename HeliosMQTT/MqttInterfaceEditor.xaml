@@ -14,7 +14,6 @@
             <RowDefinition Height="auto" />
 
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -33,7 +32,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <ListBox Grid.Row="3" Grid.ColumnSpan="1" ItemsSource="{Binding Path=Interface.Topics}" SelectedItem="{Binding Path=Interface.SelectedTopic, Mode=TwoWay}">
+            <ListBox HorizontalContentAlignment="Stretch" Grid.Row="3" Grid.ColumnSpan="1" ItemsSource="{Binding Path=Interface.Topics}" SelectedItem="{Binding Path=Interface.SelectedTopic, Mode=TwoWay}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Grid>
@@ -42,7 +41,7 @@
                                 <ColumnDefinition Width="20"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="{Binding Topic}"></TextBlock>
-                            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.RemoveTopicCommand  RelativeSource={RelativeSource AncestorType=MyUserControl }}" Content="-"></Button>
+                            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.RemoveTopicCommand,  RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBox}}}" Content="X"></Button>
                         </Grid>
                         
                     </DataTemplate>
@@ -58,13 +57,12 @@
                           SelectedValue="{Binding Path=Interface.SelectedTopic.UnitName}"></ComboBox>
                 <TextBlock Text="Default Value"/>
                 <TextBox Text="{Binding Interface.SelectedTopic.DefaultValue}"/>
+                <TextBlock Text="Description"/>
+                <TextBox Text="{Binding Interface.SelectedTopic.Description}" Height="40" AcceptsReturn="True" />
                 <Button Width="100" HorizontalAlignment="Right" Command="{Binding Path=Interface.AddTopicCommand}"  Content="Add Topic"></Button>
             </StackPanel>
 
         </Grid>
-        <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
-            <Button Grid.Row="1" Width="100" Grid.Column="1" Command="{Binding Path=Interface.RemovePublishedValueCommand}"  Content="Remove Value"></Button>
-        </StackPanel>
         <Grid Grid.Row="3" Grid.Column="1" >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -87,16 +85,11 @@
                           SelectedValue="{Binding Path=Interface.SelectedPublishedAction.UnitName}"></ComboBox>
                 <TextBlock Text="Default Value"/>
                 <TextBox Text="{Binding Interface.SelectedPublishedAction.DefaultValue}"/>
-                
+                <TextBlock Text="Description"/>
+                <TextBox Text="{Binding Interface.SelectedPublishedAction.Description}" Height="40" AcceptsReturn="True" />
+
                 <Button Grid.Row="1" HorizontalAlignment="Right" Width="100" Grid.Column="1" Command="{Binding Path=Interface.AddPublishedActionCommand}"  Content="Add Action"></Button>
             </StackPanel>
         </Grid>
-        <ListBox Grid.Row="4" Grid.ColumnSpan="3" ItemsSource="{Binding Path=Interface.ConnectedClients}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding .}"></TextBlock>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
     </Grid>
 </HeliosSdk:HeliosInterfaceEditor>

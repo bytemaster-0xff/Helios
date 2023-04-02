@@ -59,9 +59,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 
             foreach (var topic in Topics)
             {
-                var receivedTrigger = new HeliosTrigger(this, $"Topic: {topic.Topic}",
-                topic.Topic, "received", "Fired when a topic is received.",
-                   "Always returns true.", BindingValueUnits.Boolean);
+                var receivedTrigger = new HeliosTrigger(this,topic.Device, topic.Topic, "received",topic.Description);
                 Triggers.Add(receivedTrigger);
             }
         }
@@ -73,8 +71,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             {
                 var valueUnit = BindingValueUnits.FetchUnitByName(value.UnitName);
 
-                var action = new HeliosAction(this, value.Device, value.Topic, "publish",
-                    $"Action to publish {value.Topic}", value.Description, valueUnit);
+                var action = new HeliosAction(this, value.Device, value.Topic, "publish", value.Description, String.Empty, valueUnit);
                 action.Execute += Action_Execute;
                 Actions.Add(action);
             }
