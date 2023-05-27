@@ -133,6 +133,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenMacroBoard.VirtualBoard
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeliosMQTT", "HeliosMQTT\HeliosMQTT.csproj", "{E1C9A057-9640-4A79-8449-A1C1919BC482}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandaloneMQTT", "StandaloneMQTT\StandaloneMQTT.csproj", "{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -887,6 +889,30 @@ Global
 		{E1C9A057-9640-4A79-8449-A1C1919BC482}.Release|AnyCPU32.Build.0 = Release|AnyCPU32
 		{E1C9A057-9640-4A79-8449-A1C1919BC482}.Release|x64.ActiveCfg = Release|x64
 		{E1C9A057-9640-4A79-8449-A1C1919BC482}.Release|x64.Build.0 = Release|x64
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Debug|AnyCPU.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Debug|AnyCPU32.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Debug|AnyCPU32.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Debug|x64.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.JustInstallers|AnyCPU.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.JustInstallers|AnyCPU.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.JustInstallers|AnyCPU32.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.JustInstallers|AnyCPU32.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.JustInstallers|x64.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.JustInstallers|x64.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.NoInstallers|AnyCPU.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.NoInstallers|AnyCPU.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.NoInstallers|AnyCPU32.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.NoInstallers|AnyCPU32.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.NoInstallers|x64.ActiveCfg = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.NoInstallers|x64.Build.0 = Debug|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Release|AnyCPU.ActiveCfg = Release|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Release|AnyCPU.Build.0 = Release|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Release|AnyCPU32.ActiveCfg = Release|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Release|AnyCPU32.Build.0 = Release|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Release|x64.ActiveCfg = Release|Any CPU
+		{546FBD4A-7528-4DC0-8E7D-4344DFAEDEF6}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

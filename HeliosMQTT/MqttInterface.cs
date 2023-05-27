@@ -25,11 +25,13 @@ using System.Windows.Input;
 using GadrocsWorkshop.Helios.Windows;
 using System;
 using MQTTnet;
-using MQTTnet.Server;
 using System.Diagnostics;
 using System.Windows;
 using System.Linq;
 using System.Collections.Generic;
+using MQTTnet.Client;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 {
@@ -42,7 +44,10 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-        static MqttServer _mqttServer;
+        static IMqttClient _mqttClient;
+
+        public const string CLIENT_ID = "HELIOS_CLIENT";
+        public const string SERVER_IP = "127.0.0.1";
 
         // currently registered Helios triggers for this object
 
@@ -59,7 +64,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 
             foreach (var topic in Topics)
             {
-                var receivedTrigger = new HeliosTrigger(this,topic.Device, topic.Topic, "received",topic.Description);
+                var receivedTrigger = new HeliosTrigger(this, topic.Device, topic.Topic, "received", topic.Description);
                 Triggers.Add(receivedTrigger);
             }
         }
@@ -67,7 +72,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
         private void LoadActions()
         {
             Actions.Clear();
-            foreach(var value in PublishedActions)
+            foreach (var value in PublishedActions)
             {
                 var valueUnit = BindingValueUnits.FetchUnitByName(value.UnitName);
 
@@ -77,50 +82,64 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             }
         }
 
+        private async Task TryReconnectAsync(CancellationToken cancellationToken)
+        {
+            if (_mqttClient == null)
+                return;
+
+            var connected = _mqttClient.IsConnected;
+            while (_mqttClient != null && !connected && !cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var options = new MqttClientOptionsBuilder()
+                                .WithClientId(CLIENT_ID)
+                                .WithTcpServer("127.0.0.1")
+                                .WithCleanSession()
+                                .Build();
+
+                    await _mqttClient.ConnectAsync(options, CancellationToken.None);
+                    Logger.Info($"Connection established to...{SERVER_IP}");
+                }
+                catch
+                {
+                    Logger.Warn($"No connection to...{SERVER_IP}");
+                    Console.WriteLine($"No connection to...{SERVER_IP}");
+                }
+                if (_mqttClient != null)
+                {
+                    connected = _mqttClient.IsConnected;
+                    await Task.Delay(5000, cancellationToken);
+                }
+            }
+        }
+
         private void Action_Execute(object action, HeliosActionEventArgs e)
         {
             var ha = action as HeliosAction;
 
-            if(_mqttServer != null && _mqttServer.IsStarted)
+            if (_mqttClient != null && _mqttClient.IsConnected)
             {
-                _mqttServer.InjectApplicationMessage(new InjectedMqttApplicationMessage(new MqttApplicationMessage() { Topic = ha.Name } ));
+                _mqttClient.PublishAsync(new MqttApplicationMessage() { Topic = ha.Name });
             }
         }
 
         private async void OpenMQTTConnection()
         {
             var mqttFactory = new MqttFactory();
-            var mqttServerOptions = new MqttServerOptionsBuilder().WithDefaultEndpoint().Build();
-            _mqttServer = mqttFactory.CreateMqttServer(mqttServerOptions);
-            await _mqttServer.StartAsync();
-            _mqttServer.InterceptingPublishAsync += _mqttServer_InterceptingPublishAsync;
-            _mqttServer.ClientConnectedAsync += _mqttServer_ClientConnectedAsync;
-            _mqttServer.ClientDisconnectedAsync += _mqttServer_ClientDisconnectedAsync;
+            _mqttClient = mqttFactory.CreateMqttClient();
+            _mqttClient.ApplicationMessageReceivedAsync += _mqttClient_ApplicationMessageReceivedAsync;
+            _mqttClient.DisconnectedAsync += _mqttClient_DisconnectedAsync;
+            await TryReconnectAsync(CancellationToken.None);
+
         }
 
-        private System.Threading.Tasks.Task _mqttServer_ClientDisconnectedAsync(ClientDisconnectedEventArgs arg)
+        private async Task _mqttClient_DisconnectedAsync(MqttClientDisconnectedEventArgs arg)
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                if (ConnectedClients.Contains(arg.ClientId))
-                    ConnectedClients.Remove(arg.ClientId);
-            });
-            
-            return System.Threading.Tasks.Task.CompletedTask;
+            await TryReconnectAsync(CancellationToken.None);
         }
 
-        private System.Threading.Tasks.Task _mqttServer_ClientConnectedAsync(ClientConnectedEventArgs arg)
-        {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                ConnectedClients.Add(arg.ClientId);
-            });
-
-            Debug.WriteLine(arg.ClientId);
-            return System.Threading.Tasks.Task.CompletedTask;
-        }
-
-        private System.Threading.Tasks.Task _mqttServer_InterceptingPublishAsync(InterceptingPublishEventArgs arg)
+        private System.Threading.Tasks.Task _mqttClient_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -128,7 +147,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             });
 
             var trigger = Triggers.FirstOrDefault(trg => trg.Name == arg.ApplicationMessage.Topic) as HeliosTrigger;
-            if(trigger != null)
+            if (trigger != null)
             {
                 if (!Application.Current.Dispatcher.CheckAccess())
                 {
@@ -151,17 +170,17 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 
         private async void CloseMQTTConnection()
         {
-            if (_mqttServer != null)
+            if (_mqttClient != null)
             {
-                await _mqttServer.StopAsync();
-                _mqttServer.Dispose();
-                _mqttServer = null;
+                await _mqttClient.DisconnectAsync();
+                _mqttClient.Dispose();
+                _mqttClient = null;
             }
         }
 
         protected override void AttachToProfileOnMainThread()
         {
-            if(Application.Current.GetType().FullName != "GadrocsWorkshop.Helios.ProfileEditor.App" && _mqttServer == null)
+            if (Application.Current.GetType().FullName != "GadrocsWorkshop.Helios.ProfileEditor.App" && _mqttClient == null)
                 OpenMQTTConnection();
 
             PropertyChanged += MqttInterface_PropertyChanged; ;
@@ -183,9 +202,9 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             ValidationErrors.Clear();
 
             var errors = SelectedPublishedAction.Validate();
-            if(errors.Any())
+            if (errors.Any())
             {
-                foreach(var err in errors)
+                foreach (var err in errors)
                     ValidationErrors.Add(err);
                 return;
             }
@@ -212,23 +231,35 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 return;
             }
 
+            var receivedTrigger = new HeliosTrigger(this, SelectedTopic.Device, SelectedTopic.Topic, "received", SelectedTopic.Description);
+            Triggers.Add(receivedTrigger);
+
             if (String.IsNullOrEmpty(SelectedTopic.Id))
             {
                 SelectedTopic.Id = Guid.NewGuid().ToString();
-                Topics.Add(SelectedTopic);
             }
 
-                SelectedTopic = new SubscribedTopic();
-                LoadTriggers();
+            Topics.Add(SelectedTopic);
+
+            var sorted = Topics.OrderBy(top => top.Topic).ToList();
+            
+            Topics.Clear();
+            foreach(var item in sorted)
+            {
+                Topics.Add(item);
+            }
+
+            SelectedTopic = new SubscribedTopic();
         }
 
         private void RemoveTopic(Object obj)
         {
-            if(SelectedTopic != null)
+            if (SelectedTopic != null)
             {
                 Topics.Remove(SelectedTopic);
+                var existingTrigger = Triggers.SingleOrDefault(trg => trg.Name == SelectedTopic.Topic);
+                Triggers.Remove(existingTrigger);
                 SelectedTopic = null;
-                LoadTriggers();
             }
         }
 
@@ -242,7 +273,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             for (int i = 0; i < buttonCount; i++)
             {
                 reader.ReadStartElement(nameof(SubscribedTopic));
-     
+
                 topics.Add(new SubscribedTopic()
                 {
                     Id = reader.ReadElementString(nameof(TopicAction.Id)),
@@ -286,7 +317,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 PublishedActions.Add(value);
             }
 
-            foreach (var topic in topics.OrderBy(trg=>trg.Topic))
+            foreach (var topic in topics.OrderBy(trg => trg.Topic))
             {
                 Topics.Add(topic);
             }
@@ -311,7 +342,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 writer.WriteElementString(nameof(topic.DefaultValue), topic.DefaultValue);
                 writer.WriteElementString(nameof(topic.Topic), topic.Topic);
                 writer.WriteElementString(nameof(topic.UnitName), topic.UnitName);
-             
+
                 writer.WriteEndElement();
             }
 
@@ -329,7 +360,7 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 writer.WriteElementString(nameof(pv.DefaultValue), pv.DefaultValue);
                 writer.WriteElementString(nameof(pv.Topic), pv.Topic);
                 writer.WriteElementString(nameof(pv.UnitName), pv.UnitName);
-                
+
                 writer.WriteEndElement();
             }
 

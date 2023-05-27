@@ -46,7 +46,6 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TopicAction.cs" />
-    <Compile Include="SimpleMQTT.cs" />
     <Compile Include="SubscribedTopics.cs" />
   </ItemGroup>
   <ItemGroup>
