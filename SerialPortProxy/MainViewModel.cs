@@ -57,18 +57,25 @@ namespace SerialPortProxy
                     
                     OnlineSince = DateTime.Now.ToLongTimeString();
                     MQTTConnected = true;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MQTTConnected"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("LastAttempt"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("OnlineSince"));
+                    _dispatcher.Invoke(() =>
+                    {
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MQTTConnected"));
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("LastAttempt"));
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("OnlineSince"));
+                    });
+
                     await _mqttClient.SubscribeAsync("#");
                 }
                 catch
                 {
                     MQTTConnected = false;
                     OnlineSince = null;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MQTTConnected"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("LastAttempt"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("OnlineSince"));
+                    _dispatcher.Invoke(() =>
+                    {
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MQTTConnected"));
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("LastAttempt"));
+                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("OnlineSince"));
+                    });
                 }
                 if (_mqttClient != null)
                 {
@@ -127,7 +134,7 @@ namespace SerialPortProxy
                     var existing = Panels.SingleOrDefault(pnl => pnl.PortName == port);
                     if (existing == null)
                     {
-                        var panel = new Panel(port);
+                        var panel = new Panel(port, _dispatcher);
                         panel.ActionReceived += Panel_ActionReceived;
                         panel.TryOpen();
                         Panels.Add(panel);
@@ -140,9 +147,11 @@ namespace SerialPortProxy
 
                 foreach (var panel in Panels)
                 {
+                    panel.Loop();
+
                     if (ports.SingleOrDefault(prt => prt == panel.PortName) == null)
                     {
-                        panel.Missing = true;
+                        panel.Missing = true;                        
                     }
                 }
             });
