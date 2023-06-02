@@ -22,7 +22,7 @@ namespace StandaloneMQTT
         public string ConnectionTimeStamp { get; set; }
         public string DisconnectedTimeStamp { get; set; }
         public bool IsConnected { get; set; }
-        public int Reconnects { get; set; }
+        public int Reconnects { get; set; }        
 
         public void Raise()
         {
@@ -37,6 +37,7 @@ namespace StandaloneMQTT
 
     internal class MainViewModel
     {
+
         Dispatcher _dispatcher;
         static MQTTnet.Server.MqttServer _mqttServer;
 
@@ -51,7 +52,7 @@ namespace StandaloneMQTT
             var mqttServerOptions = new MqttServerOptionsBuilder().WithDefaultEndpoint().Build();
             _mqttServer = mqttFactory.CreateMqttServer(mqttServerOptions);
             await _mqttServer.StartAsync();
-            _mqttServer.InterceptingPublishAsync += _mqttServer_InterceptingPublishAsync;
+            _mqttServer.InterceptingPublishAsync += _mqttServer_InterceptingPublishAsync;            
             _mqttServer.ClientConnectedAsync += _mqttServer_ClientConnectedAsync;
             _mqttServer.ClientDisconnectedAsync += _mqttServer_ClientDisconnectedAsync;
         }
