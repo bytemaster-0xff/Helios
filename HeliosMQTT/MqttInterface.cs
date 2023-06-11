@@ -54,8 +54,13 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
         public MqttInterface() : base("MQTT Pub Sub Interface")
         {
             AddTopicCommand = new RelayCommand((obj) => AddTopic(obj));
+            CancelTopicCommand = new RelayCommand((obj) => SelectedTopic = new SubscribedTopic());
+            RemoveTopicCommand = new RelayCommand((obj) => RemoveTopic(obj as SubscribedTopic));
+
             AddPublishedActionCommand = new RelayCommand((obj) => AddPublishedAction(obj));
-            RemoveTopicCommand = new RelayCommand((obj) => RemoveTopic(obj));
+            CancelPublishedActionCommand = new RelayCommand((obj) => SelectedPublishedAction = new TopicAction());
+            RemovePublishedValueCommand = new RelayCommand((obj) => RemovePublishedAction(obj as TopicAction));
+            
         }
 
         private void LoadTriggers()
@@ -75,7 +80,6 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             foreach (var value in PublishedActions)
             {
                 var valueUnit = BindingValueUnits.FetchUnitByName(value.UnitName);
-
                 var action = new HeliosAction(this, value.Device, value.Topic, "publish", value.Description, String.Empty, valueUnit);
                 action.Execute += Action_Execute;
                 Actions.Add(action);
@@ -213,6 +217,11 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             {
                 SelectedPublishedAction.Id = Guid.NewGuid().ToString();
                 PublishedActions.Add(SelectedPublishedAction);
+
+                var valueUnit = BindingValueUnits.FetchUnitByName(SelectedPublishedAction.UnitName);
+                var action = new HeliosAction(this, SelectedPublishedAction.Device, SelectedPublishedAction.Topic, "publish", SelectedPublishedAction.Description, String.Empty, valueUnit);
+                action.Execute += Action_Execute;
+                Actions.Add(action);
             }
 
             SelectedPublishedAction = new TopicAction();
@@ -231,18 +240,15 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 return;
             }
 
-            var receivedTrigger = new HeliosTrigger(this, SelectedTopic.Device, SelectedTopic.Topic, "received", SelectedTopic.Description);
-            Triggers.Add(receivedTrigger);
-
             if (String.IsNullOrEmpty(SelectedTopic.Id))
             {
                 SelectedTopic.Id = Guid.NewGuid().ToString();
+                var receivedTrigger = new HeliosTrigger(this, SelectedTopic.Device, SelectedTopic.Topic, "received", SelectedTopic.Description);
+                Triggers.Add(receivedTrigger);
+                Topics.Add(SelectedTopic);
             }
 
-            Topics.Add(SelectedTopic);
-
-            var sorted = Topics.OrderBy(top => top.Topic).ToList();
-            
+            var sorted = Topics.OrderBy(top => top.Topic).ToList();            
             Topics.Clear();
             foreach(var item in sorted)
             {
@@ -252,14 +258,25 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
             SelectedTopic = new SubscribedTopic();
         }
 
-        private void RemoveTopic(Object obj)
+        private void RemoveTopic(SubscribedTopic obj)
         {
-            if (SelectedTopic != null)
+            if (obj != null)
             {
-                Topics.Remove(SelectedTopic);
-                var existingTrigger = Triggers.SingleOrDefault(trg => trg.Name == SelectedTopic.Topic);
+                Topics.Remove(obj);
+                var existingTrigger = Triggers.SingleOrDefault(trg => trg.Name == obj.Topic);
                 Triggers.Remove(existingTrigger);
-                SelectedTopic = null;
+                SelectedTopic = new SubscribedTopic() ;
+            }
+        }
+
+        private void RemovePublishedAction(TopicAction action)
+        {
+            if(action != null)
+            {
+                PublishedActions.Remove(action);
+                var existingACtion = Actions.SingleOrDefault(act => act.Name == action.Topic);
+                Actions.Remove(existingACtion);
+                SelectedPublishedAction = new TopicAction();
             }
         }
 
@@ -419,9 +436,11 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
 
 
         public ICommand AddTopicCommand { get; }
+        public ICommand CancelTopicCommand { get; }
         public ICommand RemoveTopicCommand { get; }
 
         public ICommand AddPublishedActionCommand { get; }
+        public ICommand CancelPublishedActionCommand { get; }
         public ICommand RemovePublishedValueCommand { get; }
 
 

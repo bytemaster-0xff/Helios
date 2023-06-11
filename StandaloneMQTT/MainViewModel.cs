@@ -22,7 +22,7 @@ namespace StandaloneMQTT
         public string ConnectionTimeStamp { get; set; }
         public string DisconnectedTimeStamp { get; set; }
         public bool IsConnected { get; set; }
-        public int Reconnects { get; set; }        
+        public int Reconnects { get; set; }
 
         public void Raise()
         {
@@ -52,9 +52,21 @@ namespace StandaloneMQTT
             var mqttServerOptions = new MqttServerOptionsBuilder().WithDefaultEndpoint().Build();
             _mqttServer = mqttFactory.CreateMqttServer(mqttServerOptions);
             await _mqttServer.StartAsync();
-            _mqttServer.InterceptingPublishAsync += _mqttServer_InterceptingPublishAsync;            
+            _mqttServer.InterceptingPublishAsync += _mqttServer_InterceptingPublishAsync;
             _mqttServer.ClientConnectedAsync += _mqttServer_ClientConnectedAsync;
             _mqttServer.ClientDisconnectedAsync += _mqttServer_ClientDisconnectedAsync;
+            _mqttServer.InterceptingSubscriptionAsync += _mqttServer_InterceptingSubscriptionAsync;
+        }
+
+        private Task _mqttServer_InterceptingSubscriptionAsync(InterceptingSubscriptionEventArgs arg)
+        {
+            arg.ProcessSubscription = true;
+            _dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                Messages.Insert(0, $"New subscription: ClientId = {arg.ClientId}, TopicFilter = {arg.TopicFilter}");
+            }));
+
+            return Task.CompletedTask;
         }
 
         public async Task ShutDown()
@@ -104,8 +116,11 @@ namespace StandaloneMQTT
             return Task.CompletedTask;
         }
 
+        
+
         private Task _mqttServer_InterceptingPublishAsync(InterceptingPublishEventArgs arg)
         {
+            arg.ProcessPublish = true;
             _dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
             {
                 Messages.Insert(0, $"{DateTime.Now.ToLongTimeString()} {arg.ApplicationMessage.Topic}");
