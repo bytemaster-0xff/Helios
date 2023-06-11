@@ -71,18 +71,21 @@ namespace SerialPortProxy
             try
             {
                 Port.Open();
-                IsConnected = true;
-                ConnectionTimeStamp = DateTime.Now.ToShortTimeString();
-                DisconnectedTimeStamp = null;
-                Port.Write("WHOIS\n");
-                Port.Write("PING\n");
-                Raise();
-                _lastPing = DateTime.Now;
+                if (Port.IsOpen && Port.PortName != "COM4" && Port.PortName != "COM5")
+                {
+                    IsConnected = true;
+                    ConnectionTimeStamp = DateTime.Now.ToShortTimeString();
+                    DisconnectedTimeStamp = null;
+                    Port.Write("WHOIS\n");
+                    Port.Write("PING\n");
+                    Raise();
+                    _lastPing = DateTime.Now;
+                }
             }
             catch (Exception ex)
             {
                 IsConnected = false;
-                if(DisconnectedTimeStamp == null)
+                if (DisconnectedTimeStamp == null)
                     DisconnectedTimeStamp = DateTime.Now.ToShortTimeString();
 
                 Raise();
@@ -91,7 +94,7 @@ namespace SerialPortProxy
 
         public void Loop()
         {
-            if(IsConnected && !Port.IsOpen)
+            if (IsConnected && !Port.IsOpen)
             {
                 IsConnected = false;
                 DisconnectedTimeStamp = DateTime.Now.ToLongDateString();
@@ -105,7 +108,7 @@ namespace SerialPortProxy
             }
             else
             {
-                if((DateTime.Now - _lastPing).TotalSeconds > 15)
+                if ((DateTime.Now - _lastPing).TotalSeconds > 15)
                 {
                     if (Port.IsOpen)
                     {

@@ -97,7 +97,7 @@ namespace SerialPortProxy
 
         private async void CloseMQTTConnection()
         {
-            if (_mqttClient != null)
+            if (_mqttClient != null && _mqttClient.IsConnected)
             {
                 await _mqttClient.DisconnectAsync();
                 _mqttClient.Dispose();
@@ -162,14 +162,14 @@ namespace SerialPortProxy
             Debug.WriteLine("Action Received: " + (sender as Panel).DeviceId + " -> " + e);
             if(_mqttClient.IsConnected)
             {
-                await _mqttClient.PublishAsync(new MqttApplicationMessage() { Topic = e });
+                await _mqttClient.PublishAsync(new MqttApplicationMessage() { Topic = e.Trim() });
             }
         }
 
         public void Init()
         {
             _timer.Start();
-            OpenMQTTConnection();
+           OpenMQTTConnection();
         }
 
         public void ShutDown()
