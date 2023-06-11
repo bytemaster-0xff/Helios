@@ -98,11 +98,12 @@ namespace GadrocsWorkshop.Helios.Interfaces.HeliosMQTT
                 {
                     var options = new MqttClientOptionsBuilder()
                                 .WithClientId(CLIENT_ID)
-                                .WithTcpServer("127.0.0.1")
+                                .WithTcpServer(SERVER_IP)
                                 .WithCleanSession()
                                 .Build();
 
                     await _mqttClient.ConnectAsync(options, CancellationToken.None);
+                    await _mqttClient.SubscribeAsync("#");
                     Logger.Info($"Connection established to...{SERVER_IP}");
                 }
                 catch
