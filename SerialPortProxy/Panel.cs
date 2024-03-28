@@ -67,11 +67,17 @@ namespace SerialPortProxy
 
         public void TryOpen()
         {
+            if(Port.PortName == "COM4" || Port.PortName == "COM5")
+            {
+                return;
+            }
+
             Missing = false;
             try
             {
                 Port.Open();
-                if (Port.IsOpen && Port.PortName != "COM4" && Port.PortName != "COM5")
+
+                if (Port.IsOpen)
                 {
                     IsConnected = true;
                     ConnectionTimeStamp = DateTime.Now.ToShortTimeString();
@@ -84,7 +90,7 @@ namespace SerialPortProxy
             }
             catch (Exception ex)
             {
-                IsConnected = false;
+               IsConnected = false;
                 if (DisconnectedTimeStamp == null)
                     DisconnectedTimeStamp = DateTime.Now.ToShortTimeString();
 

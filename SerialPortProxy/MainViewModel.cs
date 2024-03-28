@@ -108,9 +108,13 @@ namespace SerialPortProxy
 
         private Task _mqttClient_ApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs arg)
         {
-            foreach(var panel in Panels)
+            foreach (var panel in Panels)
             {
-                panel.SendTopic(arg.ApplicationMessage.Topic);
+                if (panel.IsConnected)
+                {
+                    panel.SendTopic(arg.ApplicationMessage.Topic);
+                    Debug.WriteLine($"Send => {arg.ApplicationMessage.Topic} to {panel.PortName}");
+                }
             }
             return Task.CompletedTask;
         }
