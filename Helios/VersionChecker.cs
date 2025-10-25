@@ -201,7 +201,7 @@ namespace GadrocsWorkshop.Helios
 
         private void CheckTimeBomb()
         {
-            if (_timeBombTime.CompareTo(DateTime.Now) < 0)
+            if (_timeBombTime.CompareTo(DateTime.Now) < 0 && false)
             {
                 string message =
                     $"this is a development prototype build that expired on {_timeBombTime.ToLongDateString()}";
